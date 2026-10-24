@@ -56,8 +56,26 @@ body{background:var(--panel);color:var(--ink);font-family:"Pixelify Sans",ui-mon
 .stages{display:flex;gap:8px;flex-wrap:wrap}
 .stages button{width:118px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .stages img{width:96px;height:60px;image-rendering:pixelated;border:3px solid var(--ink)}
+#mission{position:absolute;top:44px;left:10px;max-width:calc(100% - 20px);font:inherit;font-weight:700;font-size:15px;background:var(--sel);color:#2a2233;border:4px solid #2a2233;box-shadow:4px 4px 0 rgba(0,0,0,.25);padding:3px 10px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mission[hidden]{display:none}
+.pan{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;font:inherit;font-weight:700;font-size:26px;background:rgba(255,247,230,.75);color:#2a2233;border:4px solid #2a2233;cursor:pointer;touch-action:none;padding:0}
+#panL{left:6px}#panR{right:6px}
+.pan[hidden]{display:none}
+#bHide{margin-left:auto}
+#dock.mini #slots{display:none}
+.mlist{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.mrow{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:6px 10px}
+.mrow .st{font-size:20px;flex:0 0 26px;text-align:center}
+.mrow.done{opacity:.6}
+.mrow.now{background:var(--sel)}
+.sfrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+#sfCrop{width:240px;height:240px;background:#1d1a33;border:4px solid var(--ink);touch-action:none;cursor:grab}
+#sfFace{width:96px;height:96px;image-rendering:pixelated;border:4px solid var(--ink);background:#cfe8e4}
+#sfFull{width:64px;height:136px;image-rendering:pixelated;border:4px solid var(--ink);background:#cfe8e4;margin-left:8px}
+.zoom{display:flex;align-items:center;gap:10px;margin-top:8px;font-weight:700}
+.zoom input{flex:1;accent-color:var(--hot)}
 @media (max-height:520px){ .slot{width:62px;height:62px;font-size:11px} .slot img{width:30px;height:30px} #title{font-size:20px} .pb{font-size:14px} }
-@media (max-width:560px){ #title{font-size:18px;top:46px} }
+@media (max-width:560px){ #title{font-size:18px;top:46px} #mission{top:72px;font-size:13px} }
 @media (max-width:520px){ .mk{flex-direction:column;align-items:center} #mkPrev{width:104px;height:202px} .row label{flex-basis:96px} .row .val{flex-basis:90px} }
 @media (prefers-reduced-motion: reduce){ #toast{transition:none} .pb:active{transform:none} }
 </style>
@@ -68,21 +86,42 @@ body{background:var(--panel);color:var(--ink);font-family:"Pixelify Sans",ui-mon
     <canvas id="c"></canvas>
     <div id="title">Matthew’s Sandbox</div>
     <div id="top">
+      <button class="pb" id="bMissions">Missions</button>
       <button class="pb" id="bStage">Stage</button>
       <button class="pb" id="bSound">Sound: on</button>
       <button class="pb" id="bClear">Clear</button>
     </div>
+    <button id="mission" hidden></button>
+    <button class="pan" id="panL" aria-label="Scroll left">&lt;</button>
+    <button class="pan" id="panR" aria-label="Scroll right">&gt;</button>
     <div id="toast"></div>
+    <div class="sheet" id="missionSheet"><div class="card">
+      <h2 id="msTitle">Missions</h2>
+      <div class="mlist" id="msList"></div>
+      <div class="foot"><button class="pb" data-close>Close</button><button class="pb on" id="msGet">Get a mission</button></div>
+    </div></div>
+    <div class="sheet" id="selfieSheet"><div class="card">
+      <h2>Make a character from a selfie</h2>
+      <div id="sfStart"><p>Take a selfie or pick a photo. Then drag and zoom it so your face fills the circle.</p>
+        <div class="foot" style="justify-content:flex-start"><button class="pb on" id="sfCam">Take a selfie</button><button class="pb" id="sfGal">Pick a photo</button><button class="pb" data-close>Cancel</button></div></div>
+      <div id="sfEdit" hidden>
+        <div class="sfrow"><canvas id="sfCrop" width="240" height="240"></canvas><div style="display:flex;align-items:flex-end"><canvas id="sfFace" width="16" height="16"></canvas><canvas id="sfFull" width="16" height="34"></canvas></div></div>
+        <label class="zoom">Zoom <input type="range" id="sfZoom" min="1" max="5" step="0.05" value="1.5"></label>
+        <div class="foot"><button class="pb" id="sfRetake">New photo</button><button class="pb" data-close>Cancel</button><button class="pb on" id="sfUse">Use this face</button></div>
+      </div>
+      <input type="file" id="fCam" accept="image/*" capture="user" hidden>
+      <input type="file" id="fGal" accept="image/*" hidden>
+    </div></div>
     <div class="sheet" id="stageSheet"><div class="card"><h2>Pick a stage</h2><div class="stages" id="stageList"></div><div class="foot"><button class="pb" data-close>Close</button></div></div></div>
     <div class="sheet" id="makerSheet"><div class="card">
       <h2>Make a character</h2>
       <div class="mk"><canvas id="mkPrev" width="16" height="31"></canvas>
         <div id="mkRows"><div class="row"><label for="mkName">Name</label><input id="mkName" maxlength="12"></div><div id="mkOpts"></div></div></div>
-      <div class="foot"><button class="pb" id="mkRandom">Random</button><button class="pb" id="mkDelete">Delete</button><button class="pb" data-close>Cancel</button><button class="pb on" id="mkSave">Save</button></div>
+      <div class="foot"><button class="pb" id="mkSelfie">Selfie face</button><button class="pb" id="mkRandom">Random</button><button class="pb" id="mkDelete">Delete</button><button class="pb" data-close>Cancel</button><button class="pb on" id="mkSave">Save</button></div>
     </div></div>
   </div>
   <div id="dock">
-    <div id="tabs"><button class="pb" data-tab="people">People</button><button class="pb" data-tab="things">Things</button><button class="pb" data-tab="tools">Tools</button></div>
+    <div id="tabs"><button class="pb" data-tab="people">People</button><button class="pb" data-tab="things">Things</button><button class="pb" data-tab="tools">Tools</button><button class="pb" id="bHide">Hide</button></div>
     <div id="slots"></div>
   </div>
 </div>
@@ -111,7 +150,18 @@ function randomSpec(){ const r=Math.random(); return {name:pick(NAMES),skin:pick
 function dummySpec(){ return {name:"Dummy",skin:"#f7d43c",hair:"bald",hair_col:"#2b1d14",top:"tee",top_col:"#f7d43c",top_col2:"#3a3f4a",sleeves:"none",bottom:"pants",bot_col:"#f7d43c",shoe_col:"#3a3f4a",size:1,dummy:true}; }
 const isDress=sp=>sp.top==="dress"||sp.top==="checker";
 
+const PHOTOS={};
+function photoImg(src){ if(!PHOTOS[src]){ const im=new Image(); im.onload=()=>{ rags.forEach(r=>{ if(r.spec.photo===src) r.tex=makeTex(r.spec); }); if(typeof buildSlots==='function') buildSlots(); if(document.getElementById('makerSheet').classList.contains('show')&&typeof mkSpec!=='undefined'&&mkSpec&&mkSpec.photo===src) renderMaker(); }; im.src=src; PHOTOS[src]=im; } return PHOTOS[src]; }
+function photoHead(sp,face){
+  const c=cv(16,16), im=photoImg(sp.photo);
+  if(im.complete&&im.naturalWidth) c.x.drawImage(im,0,0,16,16); else disc(c,8,8,7.5,sp.skin);
+  if(face==="o"){ c.x.globalCompositeOperation='source-atop'; c.x.fillStyle='rgba(255,60,60,.35)'; c.x.fillRect(0,0,16,16); c.x.globalCompositeOperation='source-over'; }
+  if(face==="k"){ const d=c.x.getImageData(0,0,16,16); for(let i=0;i<d.data.length;i+=4){ const g=(d.data[i]+d.data[i+1]+d.data[i+2])/3; d.data[i]=d.data[i+1]=d.data[i+2]=g; } c.x.putImageData(d,0,0);
+    [[4,6],[6,6],[5,7],[4,8],[6,8],[9,6],[11,6],[10,7],[9,8],[11,8]].forEach(p=>P(c,p[0],p[1],"#222")); }
+  return c;
+}
 function headImg(sp,face){
+  if(sp.photo) return photoHead(sp,face);
   const c=cv(12,14), hc=sp.hair_col, hs=sp.hair, skin=sp.skin;
   if(hs==="long") R(c,1,3,10,11,hc); else if(hs==="bob") R(c,1,3,10,8,hc); else if(hs==="curly") R(c,1,2,10,6,hc);
   else if(hs==="pigtails"){ R(c,0,5,2,5,hc); R(c,10,5,2,5,hc); P(c,1,5,"#e84a4a"); P(c,10,5,"#e84a4a"); }
@@ -160,8 +210,8 @@ function thighImg(sp){ const c=cv(3,5);
   else R(c,0,0,3,5,sp.bot_col);
   R(c,2,0,1,5,"rgba(0,0,0,.1)"); return c; }
 function shinImg(sp){ const c=cv(3,6); const long=(sp.bottom==="pants"&&!isDress(sp))||sp.top==="overalls"; R(c,0,0,3,4,long?sp.bot_col:sp.skin); R(c,0,4,3,2,sp.shoe_col); R(c,0,5,3,1,dark(sp.shoe_col,0.7)); return c; }
-function fullImg(sp){ const c=cv(16,31); const t=thighImg(sp), s=shinImg(sp), u=uarmImg(sp), l=larmImg(sp);
-  [[t,4,20],[t,9,20],[s,4,25],[s,9,25],[torsoImg(sp),4,11],[u,2,11],[u,12,11],[l,2,16],[l,12,16],[headImg(sp,"n"),2,0]].forEach(p=>c.x.drawImage(p[0],p[1],p[2])); return c; }
+function fullImg(sp){ const o=sp.photo?3:0, c=cv(16,31+o); const t=thighImg(sp), s=shinImg(sp), u=uarmImg(sp), l=larmImg(sp);
+  [[t,4,20+o],[t,9,20+o],[s,4,25+o],[s,9,25+o],[torsoImg(sp),4,11+o],[u,2,11+o],[u,12,11+o],[l,2,16+o],[l,12,16+o],[headImg(sp,"n"),sp.photo?0:2,0]].forEach(p=>c.x.drawImage(p[0],p[1],p[2])); return c; }
 
 function itemImg(kind,hue=0){
   let c;
@@ -195,6 +245,7 @@ function icon(name){
     case "copy": R(c,1,1,7,7,"#c084fc"); R(c,4,4,7,7,"#6c4ad6"); break;
     case "new": R(c,5,1,2,10,"#4cbf56"); R(c,1,5,10,2,"#4cbf56"); break;
     case "dice": R(c,1,1,10,10,"#ffffff"); R(c,1,11,10,1,ink); [[3,3],[8,3],[5,5],[3,8],[8,8]].forEach(d=>P(c,d[0],d[1],ink)); break;
+    case "selfie": R(c,1,3,10,8,"#3a3f4a"); R(c,4,1,4,2,"#3a3f4a"); disc(c,6,7,3,"#9ad1ff"); disc(c,6,7,1.6,"#2a2233"); P(c,9,4,"#ffd23f"); break;
     case "keep": R(c,1,1,10,10,"#3b82f6"); R(c,3,1,6,4,"#e9f2ff"); R(c,3,7,6,4,"#1f4ea8"); break;
   }
   return c;
@@ -262,7 +313,7 @@ function sfx(k,gap=60){ const t=performance.now(); if(t-(lastS[k]||0)<gap) retur
 const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
 const engine=Engine.create(); engine.positionIterations=10; engine.velocityIterations=8; engine.constraintIterations=10;
 const world=engine.world;
-let W=1200, WORLD_H=640, scale=1, dpr=1, groundY=600, statics=[], stage="lab", bgCanvas=null, shake=0;
+let VW=1200, camX=0, panDir=0, W=1200, WORLD_H=640, scale=1, dpr=1, groundY=600, statics=[], stage="lab", bgCanvas=null, shake=0;
 const PX=4;
 const STAGES=[["lab","Lab",1],["park","Park",1],["beach","Beach",1],["candy","Candy Land",1],["space","Space",0.3]];
 const rags=new Set(), particles=[];
@@ -273,7 +324,7 @@ function resize(){
   const r=canvas.getBoundingClientRect(); dpr=Math.min(window.devicePixelRatio||1,2);
   canvas.width=Math.round(r.width*dpr); canvas.height=Math.round(r.height*dpr);
   scale=Math.max(r.height/620, Math.min(1, r.width/860, r.height/420));
-  const oldG=groundY; WORLD_H=r.height/scale; W=r.width/scale; groundY=WORLD_H-24;
+  const oldG=groundY; WORLD_H=r.height/scale; VW=r.width/scale; W=Math.max(2400,Math.round(VW*3)); groundY=WORLD_H-24; clampCam();
   statics.forEach(b=>Composite.remove(world,b));
   statics=[Bodies.rectangle(W/2,groundY+200,W+2000,400,{isStatic:true,friction:0.9}),Bodies.rectangle(-50,WORLD_H/2-600,100,WORLD_H+1600,{isStatic:true}),Bodies.rectangle(W+50,WORLD_H/2-600,100,WORLD_H+1600,{isStatic:true}),Bodies.rectangle(W/2,54/scale-50,W+2000,100,{isStatic:true})];
   statics.forEach(b=>b.plugin={kind:'static'}); statics[0].restitution=stage==="candy"?0.85:0;
@@ -282,24 +333,26 @@ function resize(){
   machineAt={x:16+13*PX, y:54/scale+30+15*PX};
   buildBg();
 }
+function clampCam(){ camX=Math.max(0,Math.min(W-VW,camX)); const l=document.getElementById('panL'), rr=document.getElementById('panR'); if(l){ l.hidden=camX<=1; rr.hidden=camX>=W-VW-1; } if(camX>=W-VW-10) mission('explore'); }
 function buildBg(){ bgCanvas=background(stage,Math.ceil(W/PX)+1,Math.ceil(WORLD_H/PX)+1,Math.floor(groundY/PX)); }
 window.addEventListener('resize',resize);
 if(window.ResizeObserver){ let lastSz=''; new ResizeObserver(()=>{ const r=canvas.getBoundingClientRect(), k=Math.round(r.width)+'x'+Math.round(r.height); if(k!==lastSz){ lastSz=k; resize(); } }).observe(canvas); }
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>resize());
-function setStage(i,quiet){ stage=STAGES[i][0]; engine.gravity.y=STAGES[i][2]; if(statics[0]) statics[0].restitution=stage==="candy"?0.85:0; buildBg(); if(!quiet){ toast(`Welcome to the ${STAGES[i][1]}!`); sfx('magic'); } }
+function setStage(i,quiet){ stage=STAGES[i][0]; if(stage==='space'&&!quiet) mission('space'); engine.gravity.y=STAGES[i][2]; if(statics[0]) statics[0].restitution=stage==="candy"?0.85:0; buildBg(); if(!quiet){ toast(`Welcome to the ${STAGES[i][1]}!`); sfx('magic'); } }
 
 // ---------- ragdoll ----------
 const HURT=["Oof!","Ouch!","Whoa!","Eek!"], FLY=["Wheee!","Woohoo!","Yahoo!"], IDLE=["Hi!","La la la","Hello!"];
+function makeTex(sp){ return {n:headImg(sp,'n'),b:headImg(sp,'b'),o:headImg(sp,'o'),k:headImg(sp,'k')}; }
 function makeRag(sp,x,y){
   sp={...sp}; const s=sp.size||1, u=5*s; y=Math.min(y,groundY-80*s);
   const g=Body.nextGroup(true);
-  const rag={spec:sp,s,u,group:g,alive:true,health:100,hurtT:-1e9,dragT:-1e9,flyT:-1e9,bubble:null,seed:Math.random()*4000,grounded:0,touch:0,downSince:-1,getupT:-1e9,hitT:-1e9,hitDmg:0,parts:{},joints:[],tex:{n:headImg(sp,'n'),b:headImg(sp,'b'),o:headImg(sp,'o'),k:headImg(sp,'k')}};
+  const rag={spec:sp,s,u,group:g,alive:true,health:100,hurtT:-1e9,dragT:-1e9,flyT:-1e9,bubble:null,seed:Math.random()*4000,grounded:0,touch:0,downSince:-1,getupT:-1e9,hitT:-1e9,hitDmg:0,parts:{},joints:[],tex:makeTex(sp),hr:sp.photo?7:4};
   const base={collisionFilter:{group:g},friction:0.85,frictionAir:0.012,restitution:0.05,density:0.0012};
   const defs=[["th_l",-2.5,7,thighImg(sp),0],["th_r",2.5,7,thighImg(sp),0],["sh_l",-2.5,12.5,shinImg(sp),0],["sh_r",2.5,12.5,shinImg(sp),0],["torso",0,0,torsoImg(sp),1],
-    ["ua_l",-5,-2,uarmImg(sp),2],["ua_r",5,-2,uarmImg(sp),2],["la_l",-5,3,larmImg(sp),2],["la_r",5,3,larmImg(sp),2],["head",0,-8.5,null,3]];
+    ["ua_l",-5,-2,uarmImg(sp),2],["ua_r",5,-2,uarmImg(sp),2],["la_l",-5,3,larmImg(sp),2],["la_r",5,3,larmImg(sp),2],["head",0,sp.photo?-11.5:-8.5,null,3]];
   defs.forEach(([name,dx,dy,img,z])=>{
     let b;
-    if(name==="head") b=Bodies.circle(x,y+dy*u,4*u,{...base,density:0.0008});
+    if(name==="head") b=Bodies.circle(x,y+dy*u,(sp.photo?7:4)*u,{...base,density:sp.photo?0.0004:0.0008});
     else b=Bodies.rectangle(x+dx*u,y+dy*u,img.width*u*0.92,img.height*u*0.92,{...base});
     b.plugin={rag,part:name,img,z}; rag.parts[name]=b;
   });
@@ -330,11 +383,18 @@ function makeItem(kind,x,y,size=1){
   Composite.add(world,b); return b;
 }
 function startScene(){
-  makeItem("brick",W*0.2,groundY-12); makeItem("brick",W*0.36,groundY-12); makeItem("plank",W*0.28,groundY-32);
-  makeRag(dummySpec(),W*0.28,groundY-140);
-  makeItem("tramp",W*0.56,groundY); makeRag(randomSpec(),W*0.56,Math.max(54/scale+120,groundY-340));
-  makeItem("crate",W*0.78,groundY-24); makeItem("duck",W*0.78,groundY-80); makeItem("tnt",W*0.9,groundY-22);
-  makeItem("balloon",W*0.44,groundY-250);
+  camX=0; clampCam();
+  makeItem("brick",VW*0.2,groundY-12); makeItem("brick",VW*0.36,groundY-12); makeItem("plank",VW*0.28,groundY-32);
+  makeRag(dummySpec(),VW*0.28,groundY-140);
+  makeItem("tramp",VW*0.56,groundY); makeRag(randomSpec(),VW*0.56,Math.max(54/scale+120,groundY-340));
+  makeItem("crate",VW*0.78,groundY-24); makeItem("duck",VW*0.78,groundY-80); makeItem("tnt",VW*0.9,groundY-22);
+  makeItem("balloon",VW*0.44,groundY-250);
+  // more to discover further along the stage
+  makeItem("tramp",VW*1.3,groundY); makeItem("tramp",VW*1.3+120,groundY);
+  for(let k=0;k<4;k++) makeItem("crate",VW*1.75,groundY-24-k*48);
+  makeItem("ball",VW*1.6,groundY-60); makeItem("bowling",VW*1.9,groundY-60);
+  makeRag(randomSpec(),VW*2.2,groundY-140); makeItem("balloon",VW*2.35,groundY-260); makeItem("balloon",VW*2.4,groundY-230);
+  makeItem("tnt",VW*2.6,groundY-22); makeItem("tnt",VW*2.65,groundY-22); makeItem("duck",VW*2.75,groundY-60);
 }
 function clearAll(){ Composite.allBodies(world).forEach(b=>{ if(!statics.includes(b)) Composite.remove(world,b); }); Composite.allConstraints(world).forEach(c=>Composite.remove(world,c)); rags.clear(); particles.length=0; drag=null; }
 
@@ -351,15 +411,15 @@ function explode(x,y,R=190,Pw=20){
     if(pl.kind==="tnt"&&!pl.boomed){ pl.boomed=true; setTimeout(()=>detonate(b),100+Math.random()*80); }
     if(pl.kind==="balloon") pop(b); });
 }
-function detonate(b){ if(!Composite.get(world,b.id,'body')) return; const p={...b.position}; Composite.remove(world,b); explode(p.x,p.y); }
-function pop(b){ if(!Composite.get(world,b.id,'body')) return; burst(b.position.x,b.position.y,14,["#fff","#ff7ab6"],4,24,5); sfx('pop'); Composite.remove(world,b); }
+function detonate(b){ if(!Composite.get(world,b.id,'body')) return; mission('tnt'); const p={...b.position}; Composite.remove(world,b); explode(p.x,p.y); }
+function pop(b){ if(!Composite.get(world,b.id,'body')) return; mission('pop'); burst(b.position.x,b.position.y,14,["#fff","#ff7ab6"],4,24,5); sfx('pop'); Composite.remove(world,b); }
 
 // ---------- collisions ----------
 Events.on(engine,'collisionStart',e=>{
   for(const pair of e.pairs){
     const a=pair.bodyA, b=pair.bodyB, rv=Vector.magnitude(Vector.sub(a.velocity,b.velocity));
     const tr=a.plugin&&a.plugin.kind==="tramp"?a:(b.plugin&&b.plugin.kind==="tramp"?b:null);
-    if(tr){ const o=tr===a?b:a; if(!o.isStatic&&o.velocity.y>2&&o.position.y<tr.position.y){ const up=Math.min(25,Math.max(11,Math.abs(o.velocity.y)*0.95+2)); const grp=o.plugin.rag?o.plugin.rag.list:[o]; grp.forEach(x=>Body.setVelocity(x,{x:x.velocity.x,y:-up})); tr.plugin.boingT=performance.now(); sfx('boing',90); if(o.plugin.rag&&o.plugin.rag.alive) say(o.plugin.rag,pick(["Boing!","Yippee!","Wheee!"]),1100); } continue; }
+    if(tr){ const o=tr===a?b:a; if(!o.isStatic&&o.velocity.y>2&&o.position.y<tr.position.y){ const up=Math.min(25,Math.max(11,Math.abs(o.velocity.y)*0.95+2)); const grp=o.plugin.rag?o.plugin.rag.list:[o]; grp.forEach(x=>Body.setVelocity(x,{x:x.velocity.x,y:-up})); tr.plugin.boingT=performance.now(); sfx('boing',90); if(o.plugin.rag) mission('bounce'); if(o.plugin.rag&&o.plugin.rag.alive) say(o.plugin.rag,pick(["Boing!","Yippee!","Wheee!"]),1100); } continue; }
     [[a,b],[b,a]].forEach(([s,o])=>{
       const pl=s.plugin||{}, om=o.isStatic?10:o.mass;
       if(pl.rag){ if(o.plugin&&o.plugin.rag===pl.rag) return; if(om<0.3) return; if(rv>5.5) sfx('thud',70);
@@ -375,7 +435,7 @@ function markTouch(e){ const t=engine.timing.timestamp; for(const pair of e.pair
 Events.on(engine,'collisionStart',markTouch); Events.on(engine,'collisionActive',markTouch);
 
 // ---------- tick ----------
-let mode={kind:'tool',id:'drag'}, drag=null, hold=null, pointerId=null;
+let mode={kind:'tool',id:'drag'}, drag=null, hold=null, pointerId=null, pan=null, lastPointer=null;
 function tick(){
   const now=engine.timing.timestamp, pt=performance.now(), g=engine.gravity.y;
   rags.forEach(r=>{
@@ -386,9 +446,11 @@ function tick(){
     const lying=Math.abs(wrap(P.torso.angle))>0.8||P.head.position.y>P.torso.position.y-10*r.u;
     if(r.alive&&lying&&now-r.touch<150&&!dragged&&g>0.05){ if(r.downSince<0) r.downSince=pt; else if(pt-r.downSince>1400&&pt-r.getupT>1500){ r.getupT=pt; r.downSince=-1; r.list.forEach(b=>{ Body.setVelocity(b,{x:b.velocity.x*0.3,y:-9*Math.sqrt(g)}); Body.setAngularVelocity(b,-wrap(b.angle)*0.12); }); say(r,pick(["Upsy-daisy!","I'm OK!","Hup!"]),1000); } } else r.downSince=-1;
     if(pt-r.getupT<500) r.list.forEach(b=>upright(b,0.18));
-    const v=Vector.magnitude(P.torso.velocity); if(v>14&&!grounded&&pt-r.flyT>2500){ r.flyT=pt; say(r,pick(FLY),1200,true); sfx('whoosh'); }
+    const v=Vector.magnitude(P.torso.velocity); if(v>20) mission('fling'); if(dragged&&P.torso.position.y<54/scale+110) mission('sky'); if(v>14&&!grounded&&pt-r.flyT>2500){ r.flyT=pt; say(r,pick(FLY),1200,true); sfx('whoosh'); }
     if(r.alive&&grounded&&!r.bubble&&Math.random()<0.0007) say(r,pick(IDLE),1500);
   });
+  if(panDir){ camX+=panDir*14/Math.max(scale,0.5); clampCam(); }
+  if((drag||hold)&&lastPointer){ const r=canvas.getBoundingClientRect(), x=lastPointer.x-r.left; const edge=x<50?-1:x>r.width-50?1:0; if(edge){ const old=camX; camX+=edge*10; clampCam(); const dx=camX-old; if(drag&&drag.rag) drag.p.x+=dx; if(hold) hold.p.x+=dx; } }
   if(drag&&drag.rag){
     const r=drag.rag, b=drag.body, grab=Vector.add(b.position,Vector.rotate(drag.off,b.angle)), d=Vector.sub(drag.p,grab);
     let v=Vector.mult(d,0.28); const sp=Vector.magnitude(v); if(sp>26) v=Vector.mult(v,26/sp);
@@ -403,7 +465,7 @@ function tick(){
 }
 
 // ---------- input ----------
-function toWorld(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)/scale,y:(e.clientY-r.top)/scale}; }
+function toWorld(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)/scale+camX,y:(e.clientY-r.top)/scale}; }
 function bodyAt(p){ const list=Composite.allBodies(world).filter(b=>!statics.includes(b)); let hits=Query.point(list,p); if(!hits.length){ let best=null,bd=22; list.forEach(b=>{ const d=Vector.magnitude(Vector.sub(b.position,p)); if(d<bd){ bd=d; best=b; } }); return best; } hits.sort((a,b)=>((b.plugin&&b.plugin.z)||0)-((a.plugin&&a.plugin.z)||0)); return hits[0]; }
 function endDrag(){ if(drag&&drag.c) Composite.remove(world,drag.c); drag=null; }
 canvas.addEventListener('pointerdown',e=>{
@@ -414,10 +476,10 @@ canvas.addEventListener('pointerdown',e=>{
   if(mode.kind==='char'){ const sp=mode.id==='random'?randomSpec():mode.id==='dummy'?dummySpec():chars[+mode.id]; if(!sp) return; const r=makeRag(sp,p.x,Math.min(p.y,groundY-60)); say(r,`Hi! I'm ${sp.name}!`,1600,true); sfx('hi'); if(mode.id==='random'){ lastRandom=sp; buildSlots(); } return; }
   const b=bodyAt(p);
   switch(mode.id){
-    case 'drag': if(!b) return; if(b.isStatic){ drag={body:b,static:true}; } else if(b.plugin.rag){ drag={body:b,rag:b.plugin.rag,off:Vector.rotate(Vector.sub(p,b.position),-b.angle),p}; } else { const c=Constraint.create({pointA:p,bodyB:b,pointB:Vector.sub(p,b.position),length:0,stiffness:0.18,damping:0.08}); Composite.add(world,c); drag={body:b,c}; } break;
+    case 'drag': if(!b){ pan={x:e.clientX,cam:camX}; return; } if(b.isStatic){ drag={body:b,static:true}; } else if(b.plugin.rag){ drag={body:b,rag:b.plugin.rag,off:Vector.rotate(Vector.sub(p,b.position),-b.angle),p}; } else { const c=Constraint.create({pointA:p,bodyB:b,pointB:Vector.sub(p,b.position),length:0,stiffness:0.18,damping:0.08}); Composite.add(world,c); drag={body:b,c}; } break;
     case 'poke': if(b) poke(b); break;
     case 'boom': explode(p.x,p.y); break;
-    case 'heal': if(b&&b.plugin.rag){ const r=b.plugin.rag; r.health=100; r.alive=true; say(r,"Yay!",1400,true); sfx('magic'); burst(b.position.x,b.position.y,12,["#ff6b8a","#ffb3c6"],3,36,6,-0.05); } break;
+    case 'heal': if(b&&b.plugin.rag){ const r=b.plugin.rag; if(!r.alive) mission('wake'); r.health=100; r.alive=true; say(r,"Yay!",1400,true); sfx('magic'); burst(b.position.x,b.position.y,12,["#ff6b8a","#ffb3c6"],3,36,6,-0.05); } break;
     case 'del': if(b){ burst(b.position.x,b.position.y,10,["rgba(255,255,255,.9)"],3,20,6,0); sfx('pop'); if(b.plugin.rag) removeRag(b.plugin.rag); else Composite.remove(world,b); } break;
     case 'magnet': case 'wind': hold={type:mode.id,p}; if(mode.id==='wind') sfx('whoosh'); break;
     case 'grow': if(b) resizeThing(b,1.3); break;
@@ -425,12 +487,12 @@ canvas.addEventListener('pointerdown',e=>{
     case 'copy': if(b) copyThing(b); break;
   }
 });
-canvas.addEventListener('pointermove',e=>{ if(e.pointerId!==pointerId) return; const p=toWorld(e); if(hold){ hold.p=p; return; } if(!drag) return; if(drag.static) Body.setPosition(drag.body,{x:p.x,y:drag.body.position.y}); else if(drag.rag){ drag.p=p; } else { drag.c.pointA=p; } });
-function up(e){ if(e.pointerId!==pointerId) return; pointerId=null; endDrag(); hold=null; }
+canvas.addEventListener('pointermove',e=>{ if(e.pointerId!==pointerId) return; lastPointer={x:e.clientX,y:e.clientY}; if(pan){ camX=pan.cam-(e.clientX-pan.x)/scale; clampCam(); return; } const p=toWorld(e); if(hold){ hold.p=p; return; } if(!drag) return; if(drag.static) Body.setPosition(drag.body,{x:p.x,y:drag.body.position.y}); else if(drag.rag){ drag.p=p; } else { drag.c.pointA=p; } });
+function up(e){ if(e.pointerId!==pointerId) return; pointerId=null; endDrag(); hold=null; pan=null; }
 canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
 function poke(b){
   const pl=b.plugin;
-  if(pl.rag){ const r=pl.rag; if(r.alive){ setVY(r,-9); say(r,pick(["Hehe!","Haha!","That tickles!"]),1300,true); sfx('giggle'); } else { say(r,"Zzz",1000,true); toast("Sleeping! Use Heal to wake them up"); } return; }
+  if(pl.rag){ const r=pl.rag; if(r.alive){ mission('tickle'); setVY(r,-9); say(r,pick(["Hehe!","Haha!","That tickles!"]),1300,true); sfx('giggle'); } else { say(r,"Zzz",1000,true); toast("Sleeping! Use Heal to wake them up"); } return; }
   switch(pl.kind){
     case "tnt": if(!pl.fuse){ pl.fuse=performance.now()+1500; sfx('fuse'); toast("Fuse lit! Stand back!"); } break;
     case "balloon": pop(b); break;
@@ -441,11 +503,11 @@ function poke(b){
 }
 function resizeThing(b,k){
   const pl=b.plugin;
-  if(pl.rag){ const r=pl.rag, ns=Math.round(Math.max(0.6,Math.min(2.2,r.s*k))*100)/100; if(ns===r.s){ toast(k>1?"That's as big as it gets!":"That's as small as it gets!"); return; } const p={...r.parts.torso.position}; removeRag(r); const nr=makeRag({...r.spec,size:ns},p.x,p.y-10); say(nr,k>1?"I'm huge!":"I'm tiny!",1300,true); }
+  if(pl.rag){ const r=pl.rag, ns=Math.round(Math.max(0.6,Math.min(2.2,r.s*k))*100)/100; if(ns===r.s){ toast(k>1?"That's as big as it gets!":"That's as small as it gets!"); return; } const p={...r.parts.torso.position}; removeRag(r); const nr=makeRag({...r.spec,size:ns},p.x,p.y-10); if(ns>=1.5) mission('giant'); say(nr,k>1?"I'm huge!":"I'm tiny!",1300,true); }
   else { const ns=Math.max(0.4,Math.min(3,(pl.size||1)*k)); const p={...b.position}; Composite.remove(world,b); makeItem(pl.kind,p.x,p.y-10,ns); }
   sfx('magic');
 }
-function copyThing(b){ const pl=b.plugin; if(pl.rag){ const r=pl.rag, t=r.parts.torso.position; const nr=makeRag(r.spec,Math.min(W-30,t.x+50*r.s),t.y-30); say(nr,"Twins!",1300,true); } else makeItem(pl.kind,Math.min(W-30,b.position.x+36),b.position.y-36,pl.size||1); sfx('magic'); }
+function copyThing(b){ const pl=b.plugin; if(pl.rag){ const r=pl.rag, t=r.parts.torso.position; const nr=makeRag(r.spec,Math.min(W-30,t.x+50*r.s),t.y-30); mission('twins'); say(nr,"Twins!",1300,true); } else makeItem(pl.kind,Math.min(W-30,b.position.x+36),b.position.y-36,pl.size||1); sfx('magic'); }
 
 // ---------- random character machine ----------
 let lastRandom=null;
@@ -453,7 +515,7 @@ function pullMachine(){
   const t=performance.now(); if(t-machineT<1300) return; machineT=t; sfx('machine');
   setTimeout(()=>{ const sp=randomSpec(), out={x:machineAt.x,y:machineAt.y+18*PX}; const r=makeRag(sp,out.x+40,out.y+10); r.list.forEach(b=>Body.setVelocity(b,{x:4.5,y:-3}));
     say(r,`Hi! I'm ${sp.name}!`,2000,true); sfx('fanfare'); burst(out.x,out.y,24,["#ffd23f","#ff7ab6","#5ff5c8","#ffffff"],5,48,6,0.2);
-    lastRandom=sp; toast(`Meet ${sp.name}! Tap Keep in People to save them.`); if(tab==='people') buildSlots(); },900);
+    lastRandom=sp; mission('machine'); toast(`Meet ${sp.name}! Tap Keep in People to save them.`); if(tab==='people') buildSlots(); },900);
 }
 
 // ---------- render ----------
@@ -467,10 +529,10 @@ function drawRag(r){
 function pixText(txt,x,y,size,col){ ctx.font=`700 ${size}px "Pixelify Sans",monospace`; ctx.fillStyle=col; ctx.fillText(txt,x,y); }
 function drawOverlay(r){
   const h=r.parts.head.position, s=r.s, now=performance.now();
-  if(!r.alive) for(let k=0;k<3;k++){ const a=now/400+k*2.1; ctx.fillStyle="#ffd23f"; ctx.fillRect(h.x+Math.cos(a)*20*s-3,h.y-26*s+Math.sin(a)*4-3,6,6); }
-  if(now-r.hurtT<2000){ const x=h.x-18, y=h.y-30*s-10; ctx.fillStyle="rgba(0,0,0,.45)"; ctx.fillRect(x,y,36,6); ctx.fillStyle=r.health>50?"#4ade80":r.health>20?"#facc15":"#f87171"; ctx.fillRect(x,y,36*r.health/100,6); }
+  if(!r.alive) for(let k=0;k<3;k++){ const a=now/400+k*2.1; ctx.fillStyle="#ffd23f"; ctx.fillRect(h.x+Math.cos(a)*20*s-3,h.y-r.hr*r.u-6+Math.sin(a)*4-3,6,6); }
+  if(now-r.hurtT<2000){ const x=h.x-18, y=h.y-r.hr*r.u-18; ctx.fillStyle="rgba(0,0,0,.45)"; ctx.fillRect(x,y,36,6); ctx.fillStyle=r.health>50?"#4ade80":r.health>20?"#facc15":"#f87171"; ctx.fillRect(x,y,36*r.health/100,6); }
   if(r.bubble){ const age=now-r.bubble.t; if(age>r.bubble.d){ r.bubble=null; return; }
-    ctx.font='700 18px "Pixelify Sans",monospace'; const w=ctx.measureText(r.bubble.txt).width+20, x=Math.max(4,Math.min(W-w-4,h.x-w/2)), y=h.y-30*s-50;
+    ctx.font='700 18px "Pixelify Sans",monospace'; const w=ctx.measureText(r.bubble.txt).width+20, x=Math.max(camX+4,Math.min(camX+VW-w-4,h.x-w/2)), y=h.y-r.hr*r.u-58;
     ctx.fillStyle="rgba(0,0,0,.25)"; ctx.fillRect(x+4,y+4,w,30); ctx.fillStyle="#fff"; ctx.fillRect(x,y,w,30); ctx.strokeStyle="#2a2233"; ctx.lineWidth=3; ctx.strokeRect(x,y,w,30); ctx.fillRect(h.x-4,y+30,8,6);
     ctx.textAlign='left'; ctx.textBaseline='middle'; pixText(r.bubble.txt,x+10,y+16,18,"#2a2233"); }
 }
@@ -490,7 +552,7 @@ function render(){
   const now=performance.now();
   ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled=false;
   let sx=0,sy=0; if(shake>0.3){ sx=(Math.random()-0.5)*shake; sy=(Math.random()-0.5)*shake; }
-  ctx.setTransform(dpr*scale,0,0,dpr*scale,sx*dpr,sy*dpr); ctx.imageSmoothingEnabled=false;
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,(sx-camX*scale)*dpr,sy*dpr); ctx.imageSmoothingEnabled=false;
   if(bgCanvas) ctx.drawImage(bgCanvas,0,0,bgCanvas.width*PX,bgCanvas.height*PX);
   if(stage==="lab"){ const mt=now-machineT, im=mt<1200?MACH[2+Math.floor(now/80)%2]:MACH[Math.floor(now/500)%2]; const jx=mt<1200?(Math.random()-0.5)*3:0; ctx.drawImage(im,machineAt.x-13*PX+jx,machineAt.y-15*PX,26*PX,30*PX); }
   Composite.allBodies(world).forEach(b=>{ if(b.plugin&&b.plugin.kind&&b.plugin.kind!=='static') drawItem(b); });
@@ -498,6 +560,9 @@ function render(){
   if(hold){ const ph=(now/600)%1; for(let k=0;k<3;k++){ const f=(ph+k/3)%1, rr=hold.type==='magnet'?260*(1-f):260*f; ctx.strokeStyle=hold.type==='magnet'?"rgba(255,90,90,.5)":"rgba(255,255,255,.6)"; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(hold.p.x,hold.p.y,Math.max(2,rr),0,7); ctx.stroke(); } }
   for(const p of particles){ const t=p.life/p.max; ctx.globalAlpha=1-t; ctx.fillStyle=p.col; const r=p.r*(1-t*0.4); ctx.fillRect(p.x-r/2,p.y-r/2,r,r); } ctx.globalAlpha=1;
   rags.forEach(drawOverlay);
+  // where you are on the stage
+  ctx.setTransform(dpr,0,0,dpr,0,0); const sw=canvas.width/dpr, sh=canvas.height/dpr, bw=Math.min(160,sw*0.3), bx=sw-bw-10, by=sh-14;
+  ctx.fillStyle="rgba(42,34,51,.55)"; ctx.fillRect(bx,by,bw,8); ctx.fillStyle="#ffd23f"; ctx.fillRect(bx+bw*camX/W,by,Math.max(8,bw*VW/W),8);
 }
 function fixJoints(){
   rags.forEach(r=>{
@@ -522,7 +587,118 @@ function fixJoints(){
 }
 function stepParticles(){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.life++; p.x+=p.vx; p.y+=p.vy; p.vx*=0.95; p.vy=p.vy*0.95+p.g; if(p.life>=p.max) particles.splice(i,1); } shake*=0.86; }
 const STEP=1000/60; let last=performance.now(), acc=0;
-function frame(t){ const dt=Math.min(50,t-last); last=t; acc+=dt; let n=0; while(acc>=STEP&&n<4){ tick(); Engine.update(engine,STEP); fixJoints(); stepParticles(); acc-=STEP; n++; } if(n===4) acc=0; render(); requestAnimationFrame(frame); }
+function frame(t){ const dt=Math.min(50,t-last); last=t; acc+=dt; let n=0; while(acc>=STEP&&n<4){ tick(); missionChecks(); Engine.update(engine,STEP); fixJoints(); stepParticles(); acc-=STEP; n++; } if(n===4) acc=0; render(); requestAnimationFrame(frame); }
+
+// ============ missions ============
+const MISSIONS=[
+  {id:'machine',t:'Pull the lever on the character machine in the Lab'},
+  {id:'bounce',t:'Bounce a friend on a trampoline'},
+  {id:'tickle',t:'Tickle 3 friends with Poke',n:3},
+  {id:'pop',t:'Pop 3 balloons',n:3},
+  {id:'tnt',t:'Blow up 3 TNT',n:3},
+  {id:'giant',t:'Make a giant with Grow'},
+  {id:'twins',t:'Make twins with Copy'},
+  {id:'wake',t:'Wake up a sleeping friend with Heal'},
+  {id:'fling',t:'Throw a friend super fast'},
+  {id:'sky',t:'Carry a friend up to the sky'},
+  {id:'stack',t:'Build a tower of 3 crates'},
+  {id:'explore',t:'Scroll all the way to the end of the stage'},
+  {id:'space',t:'Go to Space'},
+  {id:'keep',t:'Keep a new friend from the machine'},
+  {id:'maker',t:'Make your own character'},
+  {id:'selfie',t:'Make a character from a selfie'},
+];
+let MS={done:{},active:null,count:0};
+try{ const m=JSON.parse(localStorage.getItem('msp-missions')||'null'); if(m) MS=m; }catch(e){}
+function saveMS(){ try{ localStorage.setItem('msp-missions',JSON.stringify(MS)); }catch(e){} }
+function speak(t){ if(muted) return; try{ const u=new SpeechSynthesisUtterance(t); u.rate=0.95; u.pitch=1.2; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function mission(id,inc=1){
+  if(MS.active!==id) return;
+  const M=MISSIONS.find(m=>m.id===id); MS.count+=inc;
+  if(MS.count>=(M.n||1)){
+    MS.done[id]=true; MS.active=null; MS.count=0; saveMS();
+    sfx('fanfare',0); toast('Mission complete! You earned a star!'); speak('Mission complete! Great job!');
+    for(let k=0;k<70;k++) particles.push({x:camX+Math.random()*VW,y:54/scale+Math.random()*40,vx:(Math.random()-0.5)*3,vy:Math.random()*2,life:0,max:90+Math.random()*60,r:6,col:pick(["#ff4d6d","#ffd23f","#4ade80","#5ab8ff","#c084fc"]),g:0.08});
+  } else { saveMS(); toast(`${M.t}: ${MS.count} of ${M.n}`); }
+  showMission();
+}
+function starCount(){ return Object.keys(MS.done).length; }
+function showMission(){
+  const el=document.getElementById('mission'), M=MISSIONS.find(m=>m.id===MS.active);
+  el.hidden=!M; if(M) el.textContent='Mission: '+M.t+(M.n?` (${MS.count}/${M.n})`:'');
+  document.getElementById('bMissions').textContent=`Missions \u2605${starCount()}`;
+}
+function getMission(id){
+  let left=MISSIONS.filter(m=>!MS.done[m.id]);
+  if(!left.length){ MS.done={}; left=MISSIONS.slice(); toast('You did every mission! Starting them again.'); }
+  const M=id?MISSIONS.find(m=>m.id===id):pick(left.filter(m=>m.id!==MS.active).length?left.filter(m=>m.id!==MS.active):left);
+  MS.active=M.id; MS.count=0; saveMS(); showMission(); sfx('magic'); speak('Your mission: '+M.t);
+  document.getElementById('missionSheet').classList.remove('show');
+}
+function renderMissions(){
+  document.getElementById('msTitle').textContent=`Missions: ${starCount()} of ${MISSIONS.length} stars`;
+  const box=document.getElementById('msList'); box.innerHTML='';
+  MISSIONS.forEach(M=>{ const b=document.createElement('button'); b.className='pb mrow'+(MS.done[M.id]?' done':'')+(MS.active===M.id?' now':'');
+    const st=document.createElement('span'); st.className='st'; st.textContent=MS.done[M.id]?'\u2605':'\u2606'; b.appendChild(st);
+    const tx=document.createElement('span'); tx.textContent=M.t; b.appendChild(tx);
+    b.onclick=()=>getMission(M.id); box.appendChild(b); });
+}
+document.getElementById('bMissions').onclick=()=>{ renderMissions(); document.getElementById('missionSheet').classList.add('show'); sfx('click'); };
+document.getElementById('msGet').onclick=()=>getMission();
+document.getElementById('mission').onclick=()=>{ renderMissions(); document.getElementById('missionSheet').classList.add('show'); };
+let tickN=0;
+function missionChecks(){
+  if(++tickN%30) return;
+  if(MS.active==='stack'){ const high=Composite.allBodies(world).filter(b=>b.plugin&&b.plugin.kind==='crate'&&b.position.y<groundY-100&&Vector.magnitude(b.velocity)<0.4); if(high.length) mission('stack'); }
+}
+
+// ============ selfie ============
+let sfImg=null, sfOff={x:0,y:0}, sfZoom=1.5, sfTarget='new', sfData=null;
+const sfCrop=document.getElementById('sfCrop'), sfFace=document.getElementById('sfFace'), sfFull=document.getElementById('sfFull');
+function openSelfie(target){ sfTarget=target; document.getElementById('sfStart').hidden=false; document.getElementById('sfEdit').hidden=true; document.getElementById('selfieSheet').classList.add('show'); sfx('click'); }
+document.getElementById('sfCam').onclick=()=>document.getElementById('fCam').click();
+document.getElementById('sfGal').onclick=()=>document.getElementById('fGal').click();
+document.getElementById('sfRetake').onclick=()=>{ document.getElementById('sfStart').hidden=false; document.getElementById('sfEdit').hidden=true; };
+['fCam','fGal'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; e.target.value=''; if(!f) return;
+  const url=URL.createObjectURL(f), im=new Image();
+  im.onload=()=>{ sfImg=im; sfOff={x:0,y:-im.height*0.04}; sfZoom=1.5; document.getElementById('sfZoom').value=1.5; document.getElementById('sfStart').hidden=true; document.getElementById('sfEdit').hidden=false; drawCrop(); };
+  im.onerror=()=>toast("That photo didn't open. Try another one.");
+  im.src=url;
+}));
+document.getElementById('sfZoom').oninput=e=>{ sfZoom=+e.target.value; drawCrop(); };
+{ let dragS=null;
+  sfCrop.addEventListener('pointerdown',e=>{ dragS={x:e.clientX,y:e.clientY,ox:sfOff.x,oy:sfOff.y}; sfCrop.setPointerCapture(e.pointerId); });
+  sfCrop.addEventListener('pointermove',e=>{ if(!dragS||!sfImg) return; const k=sfImgScale(); sfOff.x=dragS.ox-(e.clientX-dragS.x)/k; sfOff.y=dragS.oy-(e.clientY-dragS.y)/k; drawCrop(); });
+  ['pointerup','pointercancel'].forEach(t=>sfCrop.addEventListener(t,()=>dragS=null)); }
+function sfImgScale(){ return 240/Math.min(sfImg.width,sfImg.height)*sfZoom; }
+function drawCrop(){
+  if(!sfImg) return; const x=sfCrop.getContext('2d'), k=sfImgScale();
+  x.fillStyle='#1d1a33'; x.fillRect(0,0,240,240);
+  x.drawImage(sfImg,120-(sfImg.width/2+sfOff.x)*k,120-(sfImg.height/2+sfOff.y)*k,sfImg.width*k,sfImg.height*k);
+  x.fillStyle='rgba(20,14,30,.55)'; x.beginPath(); x.rect(0,0,240,240); x.arc(120,120,96,0,Math.PI*2,true); x.fill('evenodd');
+  x.strokeStyle='#ffd23f'; x.lineWidth=4; x.beginPath(); x.arc(120,120,96,0,Math.PI*2); x.stroke();
+  // make the 16 x 16 pixel face
+  const t=cv(16,16); t.x.imageSmoothingEnabled=true; t.x.imageSmoothingQuality='high';
+  const src=96*2/k; t.x.drawImage(sfImg,sfImg.width/2+sfOff.x-src/2,sfImg.height/2+sfOff.y-src/2,src,src,0,0,16,16);
+  const d=t.x.getImageData(0,0,16,16), inside=(px,py)=>(px+.5-8)**2+(py+.5-8)**2<=7.6*7.6;
+  for(let py=0;py<16;py++) for(let px=0;px<16;px++){ const i=(py*16+px)*4;
+    if(!inside(px,py)){ d.data[i+3]=0; continue; }
+    for(let c=0;c<3;c++) d.data[i+c]=Math.round(d.data[i+c]/42.5)*42.5;
+    const edge=!inside(px-1,py)||!inside(px+1,py)||!inside(px,py-1)||!inside(px,py+1);
+    if(edge){ for(let c=0;c<3;c++) d.data[i+c]=Math.round(d.data[i+c]*0.55); } d.data[i+3]=255; }
+  t.x.putImageData(d,0,0); sfData=t.toDataURL();
+  const fx=sfFace.getContext('2d'); fx.clearRect(0,0,16,16); fx.drawImage(t,0,0);
+  const prevSpec={...(sfTarget==='maker'&&mkSpec?mkSpec:randomSpec()),photo:sfData}; PHOTOS[sfData]=t; t.complete=true; t.naturalWidth=16;
+  const ux=sfFull.getContext('2d'); ux.clearRect(0,0,16,34); ux.drawImage(fullImg(prevSpec),0,0);
+}
+document.getElementById('sfUse').onclick=()=>{
+  if(!sfData) return; delete PHOTOS[sfData]; photoImg(sfData);
+  document.getElementById('selfieSheet').classList.remove('show');
+  if(sfTarget==='maker'&&mkSpec){ mkSpec.photo=sfData; renderMaker(); }
+  else { openMaker(-1); mkSpec.photo=sfData; mkSpec.name='Me'; renderMaker(); }
+  sfx('magic'); toast('Now pick your clothes, then Save!');
+};
 
 // ============ UI ============
 let chars=[]; try{ chars=JSON.parse(localStorage.getItem('msp-chars')||'[]'); }catch(e){}
@@ -542,8 +718,9 @@ function buildSlots(){
     slot(icon('dice'),'Random',is('char','random'),()=>pickMode('char','random'));
     slot(headImg(dummySpec(),'n'),'Dummy',is('char','dummy'),()=>pickMode('char','dummy'));
     chars.forEach((sp,k)=>slot(headImg(sp,'n'),String(sp.name).slice(0,9),is('char',String(k)),()=>{ if(is('char',String(k))){ openMaker(k); return; } pickMode('char',String(k)); toast(`Tap to drop ${sp.name}. Tap the button again to change them.`); }));
-    if(lastRandom) slot(icon('keep'),'Keep',false,()=>{ chars.push({...lastRandom}); saveChars(); toast(`${lastRandom.name} is saved in People!`); lastRandom=null; sfx('fanfare'); buildSlots(); });
+    if(lastRandom) slot(icon('keep'),'Keep',false,()=>{ chars.push({...lastRandom}); saveChars(); mission('keep'); toast(`${lastRandom.name} is saved in People!`); lastRandom=null; sfx('fanfare'); buildSlots(); });
     slot(icon('new'),'New',false,()=>openMaker(-1));
+    slot(icon('selfie'),'Selfie',false,()=>openSelfie('new'));
   } else if(tab==='things'){
     ITEMS.forEach(k=>slot(itemImg(k,0.95),INAME[k],is('item',k),()=>pickMode('item',k)));
   } else TOOLS.forEach(([k,n])=>slot(icon(k),n,is('tool',k),()=>pickMode('tool',k)));
@@ -565,7 +742,7 @@ const mkPrev=document.getElementById('mkPrev'), mkName=document.getElementById('
 mkName.oninput=()=>{ mkSpec.name=mkName.value; };
 function openMaker(k){ mkIndex=k; mkSpec=k>=0?{...chars[k]}:randomSpec(); document.getElementById('mkDelete').style.display=k>=0?'':'none'; document.getElementById('makerSheet').classList.add('show'); renderMaker(); sfx('click'); }
 function renderMaker(){
-  mkName.value=mkSpec.name; const px=mkPrev.getContext('2d'); px.imageSmoothingEnabled=false; px.clearRect(0,0,16,31); px.drawImage(fullImg(mkSpec),0,0);
+  mkName.value=mkSpec.name; const fi=fullImg(mkSpec); mkPrev.height=fi.height; const px=mkPrev.getContext('2d'); px.imageSmoothingEnabled=false; px.clearRect(0,0,16,fi.height); px.drawImage(fi,0,0);
   mkOpts.innerHTML='';
   ROWS.forEach(([label,key,list,isCol])=>{ const row=document.createElement('div'); row.className='row';
     const l=document.createElement('label'); l.textContent=label; row.appendChild(l);
@@ -577,14 +754,18 @@ function renderMaker(){
     const cyc=d=>{ let i=list.indexOf(mkSpec[key]); i=(i+d+list.length)%list.length; mkSpec[key]=list[i]; sfx('click'); renderMaker(); };
     prev.onclick=()=>cyc(-1); next.onclick=()=>cyc(1); mkOpts.appendChild(row); });
 }
-document.getElementById('mkRandom').onclick=()=>{ const nm=mkSpec.name; mkSpec=randomSpec(); if(mkIndex>=0) mkSpec.name=nm; sfx('magic'); renderMaker(); };
+document.getElementById('mkSelfie').onclick=()=>openSelfie('maker');
+document.getElementById('bHide').onclick=e=>{ const d=document.getElementById('dock'); d.classList.toggle('mini'); e.target.textContent=d.classList.contains('mini')?'Show':'Hide'; sfx('click'); };
+['panL','panR'].forEach((id,i)=>{ const b=document.getElementById(id); b.addEventListener('pointerdown',e=>{ e.preventDefault(); panDir=i?1:-1; b.setPointerCapture(e.pointerId); }); ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,()=>panDir=0)); });
+document.getElementById('mkRandom').onclick=()=>{ const nm=mkSpec.name, ph=mkSpec.photo; mkSpec=randomSpec(); if(ph){ mkSpec.photo=ph; mkSpec.name=nm; } if(mkIndex>=0) mkSpec.name=nm; sfx('magic'); renderMaker(); };
 document.getElementById('mkDelete').onclick=()=>{ if(mkIndex<0) return; chars.splice(mkIndex,1); saveChars(); mode={kind:'char',id:'random'}; document.getElementById('makerSheet').classList.remove('show'); buildSlots(); toast('Character deleted'); };
-document.getElementById('mkSave').onclick=()=>{ mkSpec.name=(mkSpec.name||'').trim()||pick(NAMES); if(mkIndex>=0){ chars[mkIndex]={...mkSpec}; mode={kind:'char',id:String(mkIndex)}; } else { chars.push({...mkSpec}); mode={kind:'char',id:String(chars.length-1)}; } saveChars(); document.getElementById('makerSheet').classList.remove('show'); tab='people'; buildSlots(); sfx('fanfare'); toast(`Tap the screen to drop ${mkSpec.name}!`); };
+document.getElementById('mkSave').onclick=()=>{ mkSpec.name=(mkSpec.name||'').trim()||pick(NAMES); mission('maker'); if(mkSpec.photo) mission('selfie'); if(mkIndex>=0){ chars[mkIndex]={...mkSpec}; mode={kind:'char',id:String(mkIndex)}; } else { chars.push({...mkSpec}); mode={kind:'char',id:String(chars.length-1)}; } saveChars(); document.getElementById('makerSheet').classList.remove('show'); tab='people'; buildSlots(); sfx('fanfare'); toast(`Tap the screen to drop ${mkSpec.name}!`); };
 
 // ============ start ============
-resize(); setStage(0,true); buildSlots(); startScene(); requestAnimationFrame(frame);
-setTimeout(()=>toast("Pick something below, then tap the screen!"),300);
-window.__ms={engine,rags,makeRag,pullMachine,get W(){return W;},get groundY(){return groundY;},setStage,openMaker};
+chars.forEach(c=>{ if(c.photo) photoImg(c.photo); });
+resize(); setStage(0,true); buildSlots(); startScene(); showMission(); requestAnimationFrame(frame);
+setTimeout(()=>toast(MS.active?"Your mission is at the top. Good luck!":"Tap Missions at the top to get a mission!"),300);
+window.__ms={get camX(){return camX;},set camX(v){camX=v;clampCam();},get VW(){return VW;},MS,getMission,mission,engine,rags,makeRag,pullMachine,get W(){return W;},get groundY(){return groundY;},setStage,openMaker};
 })();
 </script>
 </body>
